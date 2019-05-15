@@ -26,6 +26,10 @@ func main() {
 
 
 	var portfolio Portfolio
+	if err := portfolio.ReadFromFS(); err != nil {
+		panic(err)
+	}
+
 	line := PortfolioLine{Date: time.Now(), ISIN: "ABC123XYZ", Price: price{Base: 2413, Factor: 100}, Quantity: price{Base:200, Factor: 1}}
 	portfolio.Transactions = append(portfolio.Transactions, line)
 	if err := portfolio.WriteToFS(); err != nil {
