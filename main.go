@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"time"
+	"os"
+	"strings"
 )
 
 var tickers = []string{
@@ -14,25 +16,45 @@ var tickers = []string{
 
 var history = make(map[string][]HistoryLine)
 
+var portfolio Portfolio
+
 func main() {
 	fmt.Println("PORTFOLIO_CLI v0.1")
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+		if err := inputController(input); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+	}
 
 	/*for _, ticker := range tickers {
 		ScheduleAVGetWeekly(ticker)
 	}
 
 	fmt.Printf("%+v\n", history)*/
+}
 
-
-
-	var portfolio Portfolio
-	if err := portfolio.ReadFromFS(); err != nil {
-		panic(err)
+func inputController(input string) (err error) {
+	input = strings.TrimSuffix(input, "\n")
+	args := strings.Split(input, " ")
+	switch args[0] {
+	case "load":
+		return portfolio.ReadFromFS()
+	case "save":
+		return portfolio.WriteToFS()
+	case "add":
+		line, err := inputPortfolioLine()
+		if err == nil {
+			fmt.Printf("%+v\n", line)
+			portfolio.Transactions = append(portfolio.Transactions, line)
+		}
+		return err
+	case "exit":
+		os.Exit(0)
 	}
-
-	line := PortfolioLine{Date: time.Now(), ISIN: "ABC123XYZ", Price: price{Base: 2413, Factor: 100}, Quantity: price{Base:200, Factor: 1}}
-	portfolio.Transactions = append(portfolio.Transactions, line)
-	if err := portfolio.WriteToFS(); err != nil {
-		panic(err)
-	}
+	return nil
 }

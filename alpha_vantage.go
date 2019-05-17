@@ -3,12 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	log "github.com/sirupsen/logrus"
-	"math"
+	"io/ioutil"
 	"net/http"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
@@ -103,14 +100,13 @@ func AVGetWeekly(symbol string) ([]HistoryLine) {
 		timeP, _ := time.ParseInLocation("2006-01-02", key, loc)
 		tmp := jsonMap[key]
 
-		//calculate decimal places
-		factor := calculateFactor(tmp.Open)
-
 		var historyLine HistoryLine
 		historyLine.Ticker = symbol
 		historyLine.Date = timeP
-		historyLine.Close.Factor = factor
-		historyLine.Close.Base = convertStringPriceToIntegerPrice(tmp.Close, factor)
+		if historyLine.Close, err = StringToPrice(tmp.Close); err != nil {
+			log.Errorf("AlphaVantage: %s", err)
+		}
+
 		historyLines = append(historyLines, historyLine)
 
 
@@ -118,22 +114,4 @@ func AVGetWeekly(symbol string) ([]HistoryLine) {
 
 	}
 	return historyLines
-}
-
-func convertStringPriceToIntegerPrice(stringPrice string, factor int) (intPrice int) {
-	floatPrice, err := strconv.ParseFloat(stringPrice, 64)
-	if err != nil {
-		log.Errorf("AlphaVantage: %s", err)
-	}
-	return int(floatPrice * float64(factor))
-}
-
-func calculateFactor(s string) (factor int) {
-	decimalPointIndex := strings.Index(s, ".")
-	if decimalPointIndex == -1 {
-		log.Errorf("decimal point not found")
-	}
-	decimalPlaces := len(s) - decimalPointIndex - 1
-	factor = int(math.Pow10(decimalPlaces))
-	return factor
 }

@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"encoding/csv"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -99,4 +101,27 @@ func (p *Portfolio) ReadFromFS() (err error) {
 		p.Transactions = append(p.Transactions, portfolioLine)
 	}
 	return nil
+}
+
+func getUserInput(stdin io.Reader) (input string) {
+	reader := bufio.NewReader(stdin)
+	input, _ = reader.ReadString('\n')
+	return strings.TrimSuffix(input, "\n")
+}
+
+func inputPortfolioLine() (line PortfolioLine, err error) {
+	fmt.Print("ISIN: ")
+	line.ISIN = getUserInput(os.Stdin)
+
+	fmt.Print("Date (YYYY-MM-DD): ")
+	line.Date, err = time.Parse("2006-01-02", getUserInput(os.Stdin))
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	fmt.Print("Price: ")
+	//line.Price = getUserInput(os.Stdin)
+
+
+	return line, err
 }
