@@ -6,19 +6,18 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 )
 
 type PortfolioLine struct {
-	Date time.Time
-	ISIN string
-	Price price
-	Quantity price
-	Dividend price
-	Taxes price
-	Fees price
+	Date     time.Time
+	ISIN     string
+	Price    Decimal
+	Quantity Decimal
+	Dividend Decimal
+	Taxes    Decimal
+	Fees     Decimal
 }
 
 type Portfolio struct {
@@ -28,17 +27,11 @@ type Portfolio struct {
 func (l *PortfolioLine) CSV() (output []string) {
 	output = append(output, l.Date.Format("20060102"))
 	output = append(output, l.ISIN)
-	output = append(output, strconv.Itoa(l.Price.Base))
-	output = append(output, strconv.Itoa(l.Price.Factor))
-	output = append(output, strconv.Itoa(l.Quantity.Base))
-	output = append(output, strconv.Itoa(l.Quantity.Factor))
-	output = append(output, strconv.Itoa(l.Dividend.Base))
-	output = append(output, strconv.Itoa(l.Dividend.Factor))
-	output = append(output, strconv.Itoa(l.Taxes.Base))
-	output = append(output, strconv.Itoa(l.Taxes.Factor))
-	output = append(output, strconv.Itoa(l.Fees.Base))
-	output = append(output, strconv.Itoa(l.Fees.Factor))
-	fmt.Printf("%+v\n", output)
+	output = append(output, l.Price.String())
+	output = append(output, l.Quantity.String())
+	output = append(output, l.Dividend.String())
+	output = append(output, l.Taxes.String())
+	output = append(output, l.Fees.String())
 	return output
 }
 
@@ -47,16 +40,11 @@ func getPortfolioLine(line []string) (portfolioLine PortfolioLine, err error) {
 		return portfolioLine, err
 	}
 	portfolioLine.ISIN = line[1]
-	portfolioLine.Price.Base, err = strconv.Atoi(line[2])
-	portfolioLine.Price.Factor, err = strconv.Atoi(line[3])
-	portfolioLine.Quantity.Base, err = strconv.Atoi(line[4])
-	portfolioLine.Quantity.Factor, err = strconv.Atoi(line[5])
-	portfolioLine.Dividend.Base, err = strconv.Atoi(line[6])
-	portfolioLine.Dividend.Factor, err = strconv.Atoi(line[7])
-	portfolioLine.Taxes.Base, err = strconv.Atoi(line[8])
-	portfolioLine.Taxes.Factor, err = strconv.Atoi(line[9])
-	portfolioLine.Taxes.Base, err = strconv.Atoi(line[10])
-	portfolioLine.Taxes.Factor, err = strconv.Atoi(line[11])
+	portfolioLine.Price, err = StringToDecimal(line[2])
+	portfolioLine.Quantity, err = StringToDecimal(line[3])
+	portfolioLine.Dividend, err = StringToDecimal(line[4])
+	portfolioLine.Taxes, err = StringToDecimal(line[5])
+	portfolioLine.Fees, err = StringToDecimal(line[6])
 	return portfolioLine, err
 }
 
@@ -75,6 +63,7 @@ func (p *Portfolio) WriteToFS() (err error) {
 			return err
 		}
 	}
+	fmt.Printf("%s\n", "Saved transactions to file")
 	return nil
 }
 
@@ -85,6 +74,8 @@ func (p *Portfolio) ReadFromFS() (err error) {
 		return err
 	}
 	defer portfolioFile.Close()
+
+	p.Transactions = nil
 
 	r := csv.NewReader(portfolioFile)
 	for {
@@ -100,6 +91,7 @@ func (p *Portfolio) ReadFromFS() (err error) {
 		}
 		p.Transactions = append(p.Transactions, portfolioLine)
 	}
+	fmt.Printf("%s\n", "Loaded transaction from file")
 	return nil
 }
 
@@ -120,8 +112,29 @@ func inputPortfolioLine() (line PortfolioLine, err error) {
 	}
 
 	fmt.Print("Price: ")
-	//line.Price = getUserInput(os.Stdin)
+	if line.Price, err = StringToDecimal(getUserInput(os.Stdin)); err != nil {
+		fmt.Print(err)
+	}
 
+	fmt.Print("Quantity: ")
+	if line.Quantity, err = StringToDecimal(getUserInput(os.Stdin)); err != nil {
+		fmt.Print(err)
+	}
+
+	fmt.Print("Dividend: ")
+	if line.Dividend, err = StringToDecimal(getUserInput(os.Stdin)); err != nil {
+		fmt.Print(err)
+	}
+
+	fmt.Print("Taxes: ")
+	if line.Taxes, err = StringToDecimal(getUserInput(os.Stdin)); err != nil {
+		fmt.Print(err)
+	}
+
+	fmt.Print("Fees: ")
+	if line.Fees, err = StringToDecimal(getUserInput(os.Stdin)); err != nil {
+		fmt.Print(err)
+	}
 
 	return line, err
 }

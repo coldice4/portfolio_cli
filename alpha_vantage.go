@@ -37,10 +37,10 @@ type TimeSeriesEntry struct {
 }
 
 type HistoryLine struct {
-	Date time.Time
+	Date   time.Time
 	Ticker string
-	ISIN string
-	Close price
+	ISIN   string
+	Close  Decimal
 }
 
 type jsonMap map[string]TimeSeriesEntry
@@ -103,7 +103,7 @@ func AVGetWeekly(symbol string) ([]HistoryLine) {
 		var historyLine HistoryLine
 		historyLine.Ticker = symbol
 		historyLine.Date = timeP
-		if historyLine.Close, err = StringToPrice(tmp.Close); err != nil {
+		if historyLine.Close, err = StringToDecimal(tmp.Close); err != nil {
 			log.Errorf("AlphaVantage: %s", err)
 		}
 
