@@ -59,6 +59,11 @@ func (d *Decimal) String() (str string) {
 	//clean str of trailing commas
 	str = strings.TrimSuffix(str, ".")
 
+	str = strings.TrimLeft(str, "0")
+	if str[0] == '.' {
+		str = "0" + str
+	}
+
 	return str
 }
 

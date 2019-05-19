@@ -138,3 +138,17 @@ func inputPortfolioLine() (line PortfolioLine, err error) {
 
 	return line, err
 }
+
+func (p *Portfolio) PrintTransactions() {
+	for _, line := range p.Transactions {
+		//fmt.Printf("%+v\n", line)
+		fmt.Printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+			line.Date.Format("2006-01-02"),
+			line.ISIN,
+			line.Price.String(),
+			line.Quantity.String(),
+			line.Dividend.String(),
+			line.Taxes.String(),
+			line.Fees.String())
+	}
+}

@@ -18,6 +18,8 @@ func setup() {
 	testValues["-0.03"] = Decimal{Base: -3, Factor:100}
 	testValues["123"] = Decimal{Base: 123, Factor:1}
 	testValues["-123"] = Decimal{Base: -123, Factor:1}
+	testValues["0.64"] = Decimal{Base: 64, Factor: 100}
+	testValues["0.123"] = Decimal{Base: 123, Factor:1000}
 	testValues["0"] = Decimal{Base:0, Factor:1}
 }
 

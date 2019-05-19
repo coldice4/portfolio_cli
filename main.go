@@ -53,6 +53,9 @@ func inputController(input string) (err error) {
 			portfolio.Transactions = append(portfolio.Transactions, line)
 		}
 		return err
+	case "transactions": {
+		portfolio.PrintTransactions()
+	}
 	case "exit":
 		os.Exit(0)
 	}
