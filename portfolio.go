@@ -5,23 +5,30 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"math/big"
 	"os"
 	"strings"
 	"time"
+	"github.com/shopspring/decimal"
 )
 
 type PortfolioLine struct {
 	Date     time.Time
 	ISIN     string
-	Price    Decimal
-	Quantity Decimal
-	Dividend Decimal
-	Taxes    Decimal
-	Fees     Decimal
+	Price    decimal.Decimal
+	Quantity decimal.Decimal
+	Dividend decimal.Decimal
+	Taxes    decimal.Decimal
+	Fees     decimal.Decimal
+}
+
+type Security struct {
+	Quantity big.Rat
 }
 
 type Portfolio struct {
 	Transactions []PortfolioLine
+	ISIN map[string]Security
 }
 
 func (l *PortfolioLine) CSV() (output []string) {
@@ -40,11 +47,11 @@ func getPortfolioLine(line []string) (portfolioLine PortfolioLine, err error) {
 		return portfolioLine, err
 	}
 	portfolioLine.ISIN = line[1]
-	portfolioLine.Price, err = StringToDecimal(line[2])
-	portfolioLine.Quantity, err = StringToDecimal(line[3])
-	portfolioLine.Dividend, err = StringToDecimal(line[4])
-	portfolioLine.Taxes, err = StringToDecimal(line[5])
-	portfolioLine.Fees, err = StringToDecimal(line[6])
+	portfolioLine.Price, err = decimal.NewFromString(line[2])
+	portfolioLine.Quantity, err = decimal.NewFromString(line[3])
+	portfolioLine.Dividend, err = decimal.NewFromString(line[4])
+	portfolioLine.Taxes, err = decimal.NewFromString(line[5])
+	portfolioLine.Fees, err = decimal.NewFromString(line[6])
 	return portfolioLine, err
 }
 
@@ -112,27 +119,27 @@ func inputPortfolioLine() (line PortfolioLine, err error) {
 	}
 
 	fmt.Print("Price: ")
-	if line.Price, err = StringToDecimal(getUserInput(os.Stdin)); err != nil {
+	if line.Price, err = decimal.NewFromString(getUserInput(os.Stdin)); err != nil {
 		fmt.Print(err)
 	}
 
 	fmt.Print("Quantity: ")
-	if line.Quantity, err = StringToDecimal(getUserInput(os.Stdin)); err != nil {
+	if line.Quantity, err = decimal.NewFromString(getUserInput(os.Stdin)); err != nil {
 		fmt.Print(err)
 	}
 
 	fmt.Print("Dividend: ")
-	if line.Dividend, err = StringToDecimal(getUserInput(os.Stdin)); err != nil {
+	if line.Dividend, err = decimal.NewFromString(getUserInput(os.Stdin)); err != nil {
 		fmt.Print(err)
 	}
 
 	fmt.Print("Taxes: ")
-	if line.Taxes, err = StringToDecimal(getUserInput(os.Stdin)); err != nil {
+	if line.Taxes, err = decimal.NewFromString(getUserInput(os.Stdin)); err != nil {
 		fmt.Print(err)
 	}
 
 	fmt.Print("Fees: ")
-	if line.Fees, err = StringToDecimal(getUserInput(os.Stdin)); err != nil {
+	if line.Fees, err = decimal.NewFromString(getUserInput(os.Stdin)); err != nil {
 		fmt.Print(err)
 	}
 
@@ -151,4 +158,10 @@ func (p *Portfolio) PrintTransactions() {
 			line.Taxes.String(),
 			line.Fees.String())
 	}
+}
+
+func (p *Portfolio) PrintStatus() {
+	/*for _, line := range p.Transactions {
+		//p.ISIN[line.ISIN].Quantity += line.Quantity
+	}*/
 }

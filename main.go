@@ -55,6 +55,11 @@ func inputController(input string) (err error) {
 		return err
 	case "transactions": {
 		portfolio.PrintTransactions()
+		return err
+	}
+	case "status": {
+		portfolio.PrintStatus()
+		return err
 	}
 	case "exit":
 		os.Exit(0)

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
@@ -40,7 +41,7 @@ type HistoryLine struct {
 	Date   time.Time
 	Ticker string
 	ISIN   string
-	Close  Decimal
+	Close  decimal.Decimal
 }
 
 type jsonMap map[string]TimeSeriesEntry
@@ -103,7 +104,7 @@ func AVGetWeekly(symbol string) ([]HistoryLine) {
 		var historyLine HistoryLine
 		historyLine.Ticker = symbol
 		historyLine.Date = timeP
-		if historyLine.Close, err = StringToDecimal(tmp.Close); err != nil {
+		if historyLine.Close, err = decimal.NewFromString(tmp.Close); err != nil {
 			log.Errorf("AlphaVantage: %s", err)
 		}
 
