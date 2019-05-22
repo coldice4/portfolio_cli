@@ -4,12 +4,12 @@ import (
 	"bufio"
 	"encoding/csv"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"io"
-	"math/big"
 	"os"
 	"strings"
+	"text/tabwriter"
 	"time"
-	"github.com/shopspring/decimal"
 )
 
 type PortfolioLine struct {
@@ -23,7 +23,11 @@ type PortfolioLine struct {
 }
 
 type Security struct {
-	Quantity big.Rat
+	Price decimal.Decimal
+	Quantity decimal.Decimal
+	Dividend decimal.Decimal
+	Taxes decimal.Decimal
+	Fees decimal.Decimal
 }
 
 type Portfolio struct {
@@ -108,6 +112,18 @@ func getUserInput(stdin io.Reader) (input string) {
 	return strings.TrimSuffix(input, "\n")
 }
 
+func getUserInputDecimal(stdin io.Reader) (input decimal.Decimal, err error) {
+	reader := bufio.NewReader(stdin)
+	inputStr, err := reader.ReadString('\n')
+	inputStr = strings.TrimSuffix(inputStr, "\n")
+	if inputStr == "" {
+		inputStr = "0"
+	}
+	input, err = decimal.NewFromString(inputStr)
+
+	return input, err
+}
+
 func inputPortfolioLine() (line PortfolioLine, err error) {
 	fmt.Print("ISIN: ")
 	line.ISIN = getUserInput(os.Stdin)
@@ -119,27 +135,27 @@ func inputPortfolioLine() (line PortfolioLine, err error) {
 	}
 
 	fmt.Print("Price: ")
-	if line.Price, err = decimal.NewFromString(getUserInput(os.Stdin)); err != nil {
+	if line.Price, err = getUserInputDecimal(os.Stdin); err != nil {
 		fmt.Print(err)
 	}
 
 	fmt.Print("Quantity: ")
-	if line.Quantity, err = decimal.NewFromString(getUserInput(os.Stdin)); err != nil {
+	if line.Quantity, err = getUserInputDecimal(os.Stdin); err != nil {
 		fmt.Print(err)
 	}
 
 	fmt.Print("Dividend: ")
-	if line.Dividend, err = decimal.NewFromString(getUserInput(os.Stdin)); err != nil {
+	if line.Dividend, err = getUserInputDecimal(os.Stdin); err != nil {
 		fmt.Print(err)
 	}
 
 	fmt.Print("Taxes: ")
-	if line.Taxes, err = decimal.NewFromString(getUserInput(os.Stdin)); err != nil {
+	if line.Taxes, err = getUserInputDecimal(os.Stdin); err != nil {
 		fmt.Print(err)
 	}
 
 	fmt.Print("Fees: ")
-	if line.Fees, err = decimal.NewFromString(getUserInput(os.Stdin)); err != nil {
+	if line.Fees, err = getUserInputDecimal(os.Stdin); err != nil {
 		fmt.Print(err)
 	}
 
@@ -147,9 +163,11 @@ func inputPortfolioLine() (line PortfolioLine, err error) {
 }
 
 func (p *Portfolio) PrintTransactions() {
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', tabwriter.AlignRight)
+	fmt.Fprintf(w, "Date\tISIN\tPrice\tQuantity\tDividend\tTaxes\tFees\t\n")
 	for _, line := range p.Transactions {
 		//fmt.Printf("%+v\n", line)
-		fmt.Printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t\n",
 			line.Date.Format("2006-01-02"),
 			line.ISIN,
 			line.Price.String(),
@@ -158,10 +176,32 @@ func (p *Portfolio) PrintTransactions() {
 			line.Taxes.String(),
 			line.Fees.String())
 	}
+	w.Flush()
 }
 
 func (p *Portfolio) PrintStatus() {
-	/*for _, line := range p.Transactions {
-		//p.ISIN[line.ISIN].Quantity += line.Quantity
-	}*/
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', tabwriter.AlignRight)
+	fmt.Fprintf(w, "ISIN\tPrice\tQuantity\tDividend\tTaxes\tFees\t\n")
+	p.ISIN = make(map[string]Security)
+	for _, line := range p.Transactions {
+		var sec Security
+		sec.Quantity = p.ISIN[line.ISIN].Quantity.Add(line.Quantity)
+		sec.Fees = p.ISIN[line.ISIN].Fees.Add(line.Fees)
+		sec.Taxes = p.ISIN[line.ISIN].Taxes.Add(line.Taxes)
+		sec.Dividend = p.ISIN[line.ISIN].Taxes.Add(line.Dividend)
+
+		p.ISIN[line.ISIN] = sec
+	}
+
+	for isin, status := range p.ISIN {
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t\n",
+			isin,
+			status.Price,
+			status.Quantity,
+			status.Dividend,
+			status.Taxes,
+			status.Fees)
+	}
+
+	w.Flush()
 }

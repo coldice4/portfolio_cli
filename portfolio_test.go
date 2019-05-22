@@ -15,3 +15,14 @@ func TestGetUserInput(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestGetUserInputDecimal(t *testing.T) {
+	var stdin bytes.Buffer
+
+	stdin.Write([]byte("\n"))
+
+	_, err := getUserInputDecimal(&stdin)
+	if err != nil {
+		t.Error(err)
+	}
+}
