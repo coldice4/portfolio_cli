@@ -46,9 +46,10 @@ func (l *PortfolioLine) CSV() (output []string) {
 	return output
 }
 
-func getPortfolioLine(line []string) (portfolioLine PortfolioLine, err error) {
+func getPortfolioLine(line []string) (err error) {
+	var portfolioLine PortfolioLine
 	if portfolioLine.Date, err = time.Parse("20060102", line[0]); err != nil {
-		return portfolioLine, err
+		return err
 	}
 	portfolioLine.ISIN = line[1]
 	portfolioLine.Price, err = decimal.NewFromString(line[2])
@@ -56,7 +57,13 @@ func getPortfolioLine(line []string) (portfolioLine PortfolioLine, err error) {
 	portfolioLine.Dividend, err = decimal.NewFromString(line[4])
 	portfolioLine.Taxes, err = decimal.NewFromString(line[5])
 	portfolioLine.Fees, err = decimal.NewFromString(line[6])
-	return portfolioLine, err
+
+	portfolio.Transactions = append(portfolio.Transactions, portfolioLine)
+	return err
+}
+
+func getMappingLine(line []string) (err error) {
+	return nil
 }
 
 func (p *Portfolio) WriteToFS() (err error) {
@@ -67,13 +74,15 @@ func (p *Portfolio) WriteToFS() (err error) {
 	}
 	defer portfolioFile.Close()
 
+	portfolioFile.WriteString("transactions\n")
 	w := csv.NewWriter(portfolioFile)
-	defer w.Flush()
 	for _, line := range p.Transactions {
 		if err := w.Write(line.CSV()); err != nil {
 			return err
 		}
 	}
+	w.Flush()
+
 	fmt.Printf("%s\n", "Saved transactions to file")
 	return nil
 }
@@ -88,20 +97,32 @@ func (p *Portfolio) ReadFromFS() (err error) {
 
 	p.Transactions = nil
 
-	r := csv.NewReader(portfolioFile)
+	lineReader := bufio.NewReader(portfolioFile)
+
+	var lineHandler func([]string)(error)
+
 	for {
-		line, err := r.Read()
+		line, err := lineReader.ReadString('\n')
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			return err
 		}
-		portfolioLine, err := getPortfolioLine(line)
-		if err != nil {
-			return err
+		//remove the new line because it causes confusion later on
+		line = strings.TrimSuffix(line, "\n")
+
+		fields := strings.Split(line, ",")
+		
+		switch fields[0] {
+		case "transactions":
+			lineHandler = getPortfolioLine
+		case "mapping":
+			lineHandler = getMappingLine
+		default:
+			err = lineHandler(fields)
 		}
-		p.Transactions = append(p.Transactions, portfolioLine)
 	}
+
 	fmt.Printf("%s\n", "Loaded transaction from file")
 	return nil
 }
