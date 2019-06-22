@@ -28,6 +28,7 @@ type Security struct {
 	Dividend decimal.Decimal
 	Taxes decimal.Decimal
 	Fees decimal.Decimal
+	Symbol string
 }
 
 type Portfolio struct {
@@ -63,7 +64,11 @@ func getPortfolioLine(line []string) (err error) {
 }
 
 func getMappingLine(line []string) (err error) {
-	return nil
+	var sec Security
+	sec.Symbol = line[1]
+	portfolio.ISIN[line[0]] = sec
+	fmt.Printf("%+v\n", portfolio.ISIN[line[0]])
+	return err
 }
 
 func (p *Portfolio) WriteToFS() (err error) {
@@ -96,6 +101,7 @@ func (p *Portfolio) ReadFromFS() (err error) {
 	defer portfolioFile.Close()
 
 	p.Transactions = nil
+	p.ISIN = make(map[string]Security)
 
 	lineReader := bufio.NewReader(portfolioFile)
 
@@ -202,10 +208,10 @@ func (p *Portfolio) PrintTransactions() {
 
 func (p *Portfolio) PrintStatus() {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', tabwriter.AlignRight)
-	fmt.Fprintf(w, "ISIN\tPrice\tQuantity\tDividend\tTaxes\tFees\t\n")
-	p.ISIN = make(map[string]Security)
+	fmt.Fprintf(w, "ISIN\tPrice\tQuantity\tDividend\tTaxes\tFees\tSymbol\t\n")
 	for _, line := range p.Transactions {
-		var sec Security
+		//var sec Security
+		sec := p.ISIN[line.ISIN]
 		sec.Quantity = p.ISIN[line.ISIN].Quantity.Add(line.Quantity)
 		sec.Fees = p.ISIN[line.ISIN].Fees.Add(line.Fees)
 		sec.Taxes = p.ISIN[line.ISIN].Taxes.Add(line.Taxes)
@@ -215,13 +221,14 @@ func (p *Portfolio) PrintStatus() {
 	}
 
 	for isin, status := range p.ISIN {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t\n",
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t\n",
 			isin,
 			status.Price,
 			status.Quantity,
 			status.Dividend,
 			status.Taxes,
-			status.Fees)
+			status.Fees,
+			status.Symbol)
 	}
 
 	w.Flush()
