@@ -88,6 +88,14 @@ func (p *Portfolio) WriteToFS() (err error) {
 	}
 	w.Flush()
 
+	portfolioFile.WriteString("mapping\n")
+	for key, _ := range p.ISIN {
+		if err := w.Write([]string{key, p.ISIN[key].Symbol}); err != nil {
+			return err
+		}
+	}
+	w.Flush()
+
 	fmt.Printf("%s\n", "Saved transactions to file")
 	return nil
 }
