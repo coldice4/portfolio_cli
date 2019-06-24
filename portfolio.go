@@ -215,7 +215,7 @@ func (p *Portfolio) PrintStatus() {
 		sec.Quantity = p.ISIN[line.ISIN].Quantity.Add(line.Quantity)
 		sec.Fees = p.ISIN[line.ISIN].Fees.Add(line.Fees)
 		sec.Taxes = p.ISIN[line.ISIN].Taxes.Add(line.Taxes)
-		sec.Dividend = p.ISIN[line.ISIN].Taxes.Add(line.Dividend)
+		sec.Dividend = p.ISIN[line.ISIN].Dividend.Add(line.Dividend)
 
 		p.ISIN[line.ISIN] = sec
 	}
@@ -232,4 +232,50 @@ func (p *Portfolio) PrintStatus() {
 	}
 
 	w.Flush()
+}
+
+func (p *Portfolio) CalculateHistory() {
+	firstDate := p.Transactions[0].Date
+	lastDate := time.Now()
+
+
+
+	//initialize timeline
+	history := make(map[time.Time]map[string]Security)
+	for dateCount := firstDate; dateCount.Before(lastDate) || dateCount.Equal(lastDate); dateCount = dateCount.AddDate(0,0,1) {
+		history[dateCount] = map[string]Security{}
+
+		securities := make(map[string]Security)
+		var sec Security
+		for _, line := range p.Transactions {
+			if line.Date.Before(dateCount) || line.Date.Equal(dateCount) {
+				if _, ok := securities[line.ISIN]; ok {
+					sec = securities[line.ISIN]
+				} else {
+					sec = Security{}
+				}
+
+				sec.Quantity = sec.Quantity.Add(line.Quantity)
+				sec.Fees = sec.Fees.Add(line.Fees)
+				sec.Taxes = sec.Taxes.Add(line.Taxes)
+				sec.Dividend = sec.Dividend.Add(line.Dividend)
+
+				securities[line.ISIN] = sec
+			}
+		}
+		history[dateCount] = securities
+	}
+
+	/*keys := make([]time.Time, 0, len(history))
+	for date, _ := range history {
+		keys = append(keys, date)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i].Before(keys[j])
+	})
+
+	for _, key := range keys {
+		fmt.Printf("%+v\t%+v\n", key, history[key]["LU0378434079"])
+	}*/
 }

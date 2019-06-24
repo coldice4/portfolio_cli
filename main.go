@@ -57,6 +57,9 @@ func inputController(input string) (err error) {
 		portfolio.PrintTransactions()
 		return err
 	}
+	case "calc": {
+		portfolio.CalculateHistory()
+	}
 	case "status": {
 		portfolio.PrintStatus()
 		return err
